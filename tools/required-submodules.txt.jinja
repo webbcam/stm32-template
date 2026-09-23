@@ -1,0 +1,9 @@
+# Submodules this project actually needs, read by tools/bootstrap.sh.
+# Rendered by Copier from the selected board's MCU family, so a project never
+# clones another family's HAL. .gitmodules still lists every submodule the
+# template knows about; this file is what narrows it down.
+third_party/cmsis-core
+third_party/unity
+third_party/cmock
+third_party/cmsis-device-{{ mcu_family }}
+third_party/stm32{{ mcu_family }}xx-hal-driver

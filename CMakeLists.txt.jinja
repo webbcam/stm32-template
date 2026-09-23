@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25)
 
-set(BOARD "blackpill_f401" CACHE STRING "Target board (see boards/)")
+set(BOARD "{{ board }}" CACHE STRING "Target board (see boards/)")
 
 project({{ project_slug }} C ASM)
 

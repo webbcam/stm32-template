@@ -1,13 +1,15 @@
+{%- if board == 'bluepill_f103' -%}
+{%- set board_label = 'Bluepill (STM32F103C8T6, Cortex-M3)' -%}
+{%- set openocd_target = 'stm32f1x' -%}
+{%- else -%}
+{%- set board_label = 'Blackpill (STM32F401CCU6, Cortex-M4F)' -%}
+{%- set openocd_target = 'stm32f4x' -%}
+{%- endif -%}
 # {{ project_name }}
 
 STM32 firmware, generated from [stm32-template](https://github.com/YOUR_USERNAME/stm32-template).
 
-Supported boards:
-
-| Preset | Board | MCU | Core |
-|---|---|---|---|
-| `blackpill_f401` | Blackpill | STM32F401CCU6 | Cortex-M4F |
-| `bluepill_f103` | Bluepill | STM32F103C8T6 | Cortex-M3 |
+Board: **{{ board_label }}**
 
 ## First-time setup
 
@@ -15,19 +17,18 @@ Supported boards:
 ./tools/bootstrap.sh
 ```
 
-Clones the pinned third-party submodules. (Plain `git submodule update --init`
-won't work here — a generated project has `.gitmodules` but no git history, so
-there are no gitlinks for git to act on.)
+Clones the pinned third-party submodules this board needs. (Plain
+`git submodule update --init` won't work here — a generated project has
+`.gitmodules` but no git history, so there are no gitlinks for git to act on.)
 
 ## Build (target)
 
 ```sh
-cmake --preset blackpill_f401
-cmake --build --preset blackpill_f401
+cmake --preset {{ board }}
+cmake --build --preset {{ board }}
 ```
 
-Swap in `bluepill_f103` for the other board. Output lands in
-`build/<preset>/{{ project_slug }}.elf` (plus `.bin`, `.hex`, `.map`).
+Output lands in `build/{{ board }}/{{ project_slug }}.elf` (plus `.bin`, `.hex`, `.map`).
 
 ## Build & run tests (host)
 
@@ -42,13 +43,8 @@ ctest --test-dir build/host-test
 ## Flash
 
 ```sh
-# blackpill
-openocd -f interface/stlink.cfg -f target/stm32f4x.cfg \
-  -c "program build/blackpill_f401/{{ project_slug }}.elf verify reset exit"
-
-# bluepill
-openocd -f interface/stlink.cfg -f target/stm32f1x.cfg \
-  -c "program build/bluepill_f103/{{ project_slug }}.elf verify reset exit"
+openocd -f interface/stlink.cfg -f target/{{ openocd_target }}.cfg \
+  -c "program build/{{ board }}/{{ project_slug }}.elf verify reset exit"
 ```
 
 ## Layout

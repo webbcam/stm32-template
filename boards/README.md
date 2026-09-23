@@ -70,5 +70,12 @@ submodule for the family and is referenced by path.
      families — F1 uses `HSEPredivValue` + `PLLMUL`, F4 uses
      `PLLM/PLLN/PLLP/PLLQ`.
 
-5. **Add a configure/build preset pair** for the new board in
-   `CMakePresets.json.jinja`.
+5. **Add the board to `CMakePresets.json.jinja`.** It renders a single preset
+   for the selected board, so extend its `{% if %}` with the new display name.
+
+6. **Add it to the `board` question in `copier.yml`.** That is all that's
+   needed for generation: `_exclude` re-includes `boards/{{ board }}/**`
+   generically, and `tools/required-submodules.txt.jinja` derives the family's
+   submodules from `mcu_family` using ST's consistent repo naming
+   (`cmsis-device-<family>`, `stm32<family>xx-hal-driver`). If the new board
+   is in an already-supported family, add a `mcu_family` mapping entry only.

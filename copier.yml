@@ -17,24 +17,37 @@ project_slug:
     project_slug may only contain letters, digits, hyphens and underscores
     {% endif %}
 
+board:
+  type: str
+  help: "Target board"
+  default: blackpill_f401
+  choices:
+    "Blackpill — STM32F401CCU6, Cortex-M4F": blackpill_f401
+    "Bluepill — STM32F103C8T6, Cortex-M3": bluepill_f103
+
+# Derived, never asked (when: false). Selects which CMSIS-device/HAL submodule
+# pair the project gets, and which branch of third_party/CMakeLists.txt runs.
+mcu_family:
+  type: str
+  when: false
+  default: "{% if board == 'bluepill_f103' %}f1{% else %}f4{% endif %}"
+
 # NOTE: defining _exclude REPLACES Copier's DEFAULT_EXCLUDE rather than
-# extending it. The entries below are those defaults, restored by hand —
+# extending it. The first five entries are those defaults, restored by hand —
 # without them Copier copies this repo's entire .git directory (including
 # .git/modules/, i.e. every submodule's full history) plus copier.yml itself
 # into every generated project.
 #
 # third_party/** is excluded because Copier clones the template's submodules
-# when the source is a URL — verified: `copier copy file://.../template.git`
-# produces a 74MB project with the full HAL/CMSIS/Unity source checked out as
-# ORDINARY FILES (mode 100644), not submodules. Deinitializing the submodules
-# in this repo does NOT prevent that; it only helps when generating from a
-# local working copy. Since publishing this template means people generate
-# from its URL, the exclusion is what actually keeps third_party/ empty in
-# generated projects, where tools/bootstrap.sh then restores it as real
-# pinned submodules.
+# when the source is a URL — verified: without it, generating from a URL
+# produces a project with the full HAL/CMSIS/Unity source checked out as
+# ORDINARY FILES (mode 100644) instead of pinned submodules. Deinitializing
+# the submodules here does NOT prevent that; it only helps when generating
+# from a local working copy. tools/bootstrap.sh restores them properly.
 #
-# `!third_party/CMakeLists.txt` re-includes the one file there that is ours
-# rather than vendored.
+# boards/** is excluded then selectively re-included so a project only carries
+# the board it targets. Written generically (rather than listing the boards
+# not chosen) so adding a board needs no change here.
 _exclude:
   - "copier.yml"
   - "copier.yaml"
@@ -43,3 +56,6 @@ _exclude:
   - "~*"
   - "third_party/**"
   - "!third_party/CMakeLists.txt"
+  - "boards/**"
+  - "!boards/README.md"
+  - "!boards/{{ board }}/**"
