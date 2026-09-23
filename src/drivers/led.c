@@ -1,7 +1,8 @@
 #include "led.h"
 
-#include "stm32f4xx_hal.h"
+#include "mcu.h"
 
+/* Both blackpill and bluepill wire the onboard LED to PC13, active-low. */
 #define LED_PORT GPIOC
 #define LED_PIN GPIO_PIN_13
 

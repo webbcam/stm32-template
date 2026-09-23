@@ -2,7 +2,12 @@
 
 STM32 firmware, generated from [stm32-template](https://github.com/YOUR_USERNAME/stm32-template).
 
-Board: **Blackpill (STM32F401CCU6)**
+Supported boards:
+
+| Preset | Board | MCU | Core |
+|---|---|---|---|
+| `blackpill_f401` | Blackpill | STM32F401CCU6 | Cortex-M4F |
+| `bluepill_f103` | Bluepill | STM32F103C8T6 | Cortex-M3 |
 
 ## First-time setup
 
@@ -21,7 +26,8 @@ cmake --preset blackpill_f401
 cmake --build --preset blackpill_f401
 ```
 
-Output lands in `build/blackpill_f401/{{ project_slug }}.elf` (plus `.bin`, `.hex`, `.map`).
+Swap in `bluepill_f103` for the other board. Output lands in
+`build/<preset>/{{ project_slug }}.elf` (plus `.bin`, `.hex`, `.map`).
 
 ## Build & run tests (host)
 
@@ -36,8 +42,13 @@ ctest --test-dir build/host-test
 ## Flash
 
 ```sh
+# blackpill
 openocd -f interface/stlink.cfg -f target/stm32f4x.cfg \
   -c "program build/blackpill_f401/{{ project_slug }}.elf verify reset exit"
+
+# bluepill
+openocd -f interface/stlink.cfg -f target/stm32f1x.cfg \
+  -c "program build/bluepill_f103/{{ project_slug }}.elf verify reset exit"
 ```
 
 ## Layout

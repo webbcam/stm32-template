@@ -1,11 +1,13 @@
 # {{ project_name }}
 
-STM32 firmware built with CMake. Board: blackpill (STM32F401CCU6), family STM32F4.
+STM32 firmware built with CMake. Two boards are supported:
+`blackpill_f401` (STM32F401CCU6, Cortex-M4F, family F4) and
+`bluepill_f103` (STM32F103C8T6, Cortex-M3, family F1).
 
 ## Build (cross-compile, target hardware)
 
 ```sh
-cmake --preset blackpill_f401
+cmake --preset blackpill_f401        # or bluepill_f103
 cmake --build --preset blackpill_f401
 ```
 
@@ -22,12 +24,19 @@ ctest --test-dir build/host-test
 
 ## Layout
 
-- `boards/<name>/` — board-specific MCU define, linker script, and startup file selection.
-  Only `blackpill_f401` exists today. See `boards/README.md` before adding another.
+- `boards/<name>/` — everything board-specific: `board.cmake` (family, MCU define, CPU
+  flags, linker script, startup file), `mcu.h`, `board.c` (clock tree),
+  `stm32<family>xx_hal_conf.h`, and the linker script. See `boards/README.md` before
+  adding another.
 - `src/app/` — board-agnostic application logic. This is what gets unit tested.
 - `src/drivers/` — thin wrappers over the vendor HAL; the seam CMock mocks for host
   tests. Don't call HAL functions directly from `src/app/` — go through a driver wrapper
   so the app layer stays testable on the host.
+
+Nothing under `src/` may include a family-specific header. Include `"mcu.h"` instead —
+each board provides one that pulls in its own `stm32f4xx_hal.h` / `stm32f1xx_hal.h`.
+Likewise clock setup lives in each board's `board_init()`, because the F1 and F4 PLL
+register layouts are not interchangeable.
 - `third_party/` — pinned git submodules (CMSIS core, CMSIS device F4, F4 HAL driver,
   Unity, CMock). Don't edit these in place, and don't bump a pinned commit without
   checking the release notes for API changes across CMSIS-Core/CMSIS-Device/HAL — they

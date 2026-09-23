@@ -4,19 +4,27 @@
   "configurePresets": [
     {
       "name": "blackpill_f401",
-      "displayName": "Blackpill (STM32F401CCU6)",
+      "displayName": "Blackpill (STM32F401CCU6, Cortex-M4F)",
       "binaryDir": "${sourceDir}/build/blackpill_f401",
       "cacheVariables": {
         "BOARD": "blackpill_f401",
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchain-arm-none-eabi.cmake",
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }
+    },
+    {
+      "name": "bluepill_f103",
+      "displayName": "Bluepill (STM32F103C8T6, Cortex-M3)",
+      "binaryDir": "${sourceDir}/build/bluepill_f103",
+      "cacheVariables": {
+        "BOARD": "bluepill_f103",
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchain-arm-none-eabi.cmake",
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
     }
   ],
   "buildPresets": [
-    {
-      "name": "blackpill_f401",
-      "configurePreset": "blackpill_f401"
-    }
+    { "name": "blackpill_f401", "configurePreset": "blackpill_f401" },
+    { "name": "bluepill_f103", "configurePreset": "bluepill_f103" }
   ]
 }

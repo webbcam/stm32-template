@@ -1,15 +1,19 @@
-# Cortex-M4F flags shared by every source file in the cross build, vendor code
-# included — these affect ABI/codegen, so they must apply everywhere.
-# Board-specific MCU defines live in boards/<name>/board.cmake.
+# CPU_FLAGS is board-specific (Cortex-M4F vs M3 differ in -mcpu, FPU and float
+# ABI) and comes from boards/<name>/board.cmake, included by the root
+# CMakeLists.txt before this file. These affect ABI/codegen so they apply to
+# every source in the cross build, vendor code included.
+if(NOT DEFINED CPU_FLAGS)
+    message(FATAL_ERROR "CPU_FLAGS not set — boards/${BOARD}/board.cmake must be include()'d first")
+endif()
+
 add_compile_options(
-    -mcpu=cortex-m4
-    -mfpu=fpv4-sp-d16
-    -mfloat-abi=hard
-    -mthumb
+    ${CPU_FLAGS}
     -ffunction-sections
     -fdata-sections
     -fno-common
 )
+
+add_link_options(${CPU_FLAGS})
 
 # Warnings are opt-in per target, not global: link this into our own targets
 # (src/) but never into the vendored HAL/CMSIS, whose warnings we can't fix
@@ -18,11 +22,4 @@ add_library(project_warnings INTERFACE)
 target_compile_options(project_warnings INTERFACE
     -Wall
     -Wextra
-)
-
-add_link_options(
-    -mcpu=cortex-m4
-    -mfpu=fpv4-sp-d16
-    -mfloat-abi=hard
-    -mthumb
 )

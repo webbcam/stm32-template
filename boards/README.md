@@ -1,19 +1,32 @@
 # Adding a new board
 
-A board folder contains exactly three things: an MCU identity (`board.cmake`),
-a target that builds them (`CMakeLists.txt`), and a linker script. Startup
-assembly is **not** hand-written — it ships in the CMSIS-device submodule for
-the family and is referenced by path.
+Everything board-specific lives in one directory. `boards/bluepill_f103/` was
+added as the second board and is the worked example to copy — diff it against
+`boards/blackpill_f401/` to see exactly what varies between families.
+
+A board directory contains:
+
+| File | Purpose |
+|---|---|
+| `board.cmake` | Variables only: `MCU_FAMILY`, `MCU_DEFINE`, `CPU_FLAGS`, `LINKER_SCRIPT`, `HAL_CONF_DIR`, `STARTUP_SOURCE` |
+| `CMakeLists.txt` | Builds the `board` target from the startup file + `board.c` |
+| `board.c` / `board.h` | `board_init()` — the clock tree |
+| `mcu.h` | Includes this family's `stm32<family>xx_hal.h` |
+| `stm32<family>xx_hal_conf.h` | Which HAL modules are compiled, `HSE_VALUE` |
+| `<PART>_FLASH.ld` | Linker script (flash/RAM sizes) |
+
+Startup assembly is **not** hand-written — it ships in the CMSIS-device
+submodule for the family and is referenced by path.
 
 ## Steps
 
-1. **Identify the family and exact part.** e.g. bluepill = STM32F103C8T6, family F1.
+1. **Identify the family and exact part.** e.g. bluepill = STM32F103C8T6,
+   family F1, Cortex-M3.
 
-2. **Add the family's submodules, if not already present.**
-   ST splits CMSIS-device and HAL per family. For F1 that's
-   `cmsis-device-f1` and `stm32f1xx-hal-driver` (same GitHub org/pattern as
-   the F4 ones already vendored — see `.gitmodules`). `cmsis-core` is shared
-   across every family and doesn't need re-adding.
+2. **Add the family's submodules, if the family is new.** ST splits
+   CMSIS-device and HAL per family, following a consistent naming pattern
+   (`cmsis-device-f1`, `stm32f1xx-hal-driver`) — see `.gitmodules`.
+   `cmsis-core` is shared by every family and doesn't need re-adding.
 
    After `git submodule add`, record the pin so generated projects can
    reproduce it:
@@ -34,34 +47,28 @@ the family and is referenced by path.
    clones submodules when generating from a URL, so without it a published
    template ships the HAL as plain files instead of pinned submodules.
 
-3. **Wire the new family into `third_party/CMakeLists.txt`.**
-   Duplicate the `cmsis-device-f4`/`hal` block for the new family (e.g.
-   `cmsis-device-f1`, and a `hal` build using `stm32f1xx-hal-driver/Src`).
-   If more than one family is ever active at once, rename the targets
-   (`hal-f4`, `hal-f1`) so `src/CMakeLists.txt` can pick the right one per board.
+3. **Teach `third_party/CMakeLists.txt` about the family** by adding a branch
+   to the `if(MCU_FAMILY ...)` block naming its device dir, system source, and
+   HAL dir. The targets it produces (`cmsis-device`, `hal`) are deliberately
+   family-neutral, so nothing downstream changes.
 
-4. **Create `boards/<name>/`** with:
-   - `board.cmake` — sets `MCU_DEFINE` (e.g. `STM32F103xB`), `LINKER_SCRIPT`,
-     and `STARTUP_SOURCE` (path into the CMSIS-device submodule's
-     `Source/Templates/gcc/startup_<device>.s` — check that exact filename
-     exists in the submodule for your part before pointing at it).
-   - `CMakeLists.txt` — same three lines as `boards/blackpill_f401/CMakeLists.txt`,
-     unchanged; it just consumes the variables from `board.cmake`.
-   - `<PART>_FLASH.ld` — a GCC linker script. ST doesn't publish these
-     standalone; pull one from an STM32CubeIDE-generated project for the
-     part, or adapt `boards/blackpill_f401/STM32F401CCUX_FLASH.ld` by
-     updating the `MEMORY` block's `FLASH`/`RAM` origin and length for the
-     new part's datasheet values.
+4. **Create `boards/<name>/`** with the files in the table above. The pieces
+   most easily got wrong:
 
-5. **Add a configure/build preset pair** for the new board name in
-   `CMakePresets.json`.
+   - `CPU_FLAGS` must match the core. Cortex-M4F is
+     `-mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard`; Cortex-M3 has no
+     FPU and needs `-mcpu=cortex-m3 -mfloat-abi=soft`. Getting this wrong
+     produces link errors or silently wrong float behaviour, so verify with
+     `arm-none-eabi-readelf -A <elf>` — it should report the core and FP arch
+     you expect.
+   - `STARTUP_SOURCE` must name a file that actually exists under the
+     submodule's `Source/Templates/gcc/`; check before pointing at it.
+   - The linker script's `MEMORY` block must match the part's real flash/RAM
+     (bluepill C8T6 is 64K/20K; blackpill F401CC is 256K/64K). Adapt an
+     existing one rather than starting from scratch.
+   - `board.c` is where the clock tree goes. Don't try to share it across
+     families — F1 uses `HSEPredivValue` + `PLLMUL`, F4 uses
+     `PLLM/PLLN/PLLP/PLLQ`.
 
-6. **Set the board's clock tree.** `system_stm32<family>xx.c` (from the
-   CMSIS-device submodule) only does minimal CMSIS-level init — actual
-   `SystemClock_Config()` (HSE frequency, PLL multipliers) is board-specific
-   and belongs in the application, not in a vendored file. Write it based on
-   the new board's crystal frequency.
-
-Once there's a second board, promote the repeated `third_party` family block
-and the repeated board CMake boilerplate into something less copy-pasted —
-not before, since one instance isn't a pattern yet.
+5. **Add a configure/build preset pair** for the new board in
+   `CMakePresets.json.jinja`.
