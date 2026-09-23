@@ -1,0 +1,6 @@
+# Build artifacts (.elf/.bin/.hex/.map all land inside build/)
+build/
+build-*/
+
+.DS_Store
+.vscode/

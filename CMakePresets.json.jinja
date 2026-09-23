@@ -1,0 +1,22 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 25, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "blackpill_f401",
+      "displayName": "Blackpill (STM32F401CCU6)",
+      "binaryDir": "${sourceDir}/build/blackpill_f401",
+      "cacheVariables": {
+        "BOARD": "blackpill_f401",
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchain-arm-none-eabi.cmake",
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "blackpill_f401",
+      "configurePreset": "blackpill_f401"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+[submodule "third_party/cmsis-core"]
+	path = third_party/cmsis-core
+	url = https://github.com/STMicroelectronics/cmsis-core.git
+	sha = afc5ca6af0a49232fde7eb4548dd0962d119ce14
+
+[submodule "third_party/cmsis-device-f4"]
+	path = third_party/cmsis-device-f4
+	url = https://github.com/STMicroelectronics/cmsis-device-f4.git
+	sha = a833f4af71410f25b01468f976560d7ff63a2fc9
+
+[submodule "third_party/stm32f4xx-hal-driver"]
+	path = third_party/stm32f4xx-hal-driver
+	url = https://github.com/STMicroelectronics/stm32f4xx-hal-driver.git
+	sha = 1f6451c3e07728b4c830744de380e56bf5bc0026
+
+[submodule "third_party/unity"]
+	path = third_party/unity
+	url = https://github.com/ThrowTheSwitch/Unity.git
+	sha = 2b80d1a357271b20f15c9f2573ddab164a626132
+
+[submodule "third_party/cmock"]
+	path = third_party/cmock
+	url = https://github.com/ThrowTheSwitch/CMock.git
+	sha = f2a70b41bb06c63f8957444ab8c3e32f89f8099e

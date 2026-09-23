@@ -1,0 +1,15 @@
+cmake_minimum_required(VERSION 3.25)
+
+set(BOARD "blackpill_f401" CACHE STRING "Target board (see boards/)")
+
+project({{ project_slug }} C ASM)
+
+include(cmake/compiler_flags.cmake)
+
+# board.cmake sets MCU_DEFINE/LINKER_SCRIPT/STARTUP_SOURCE — must run before
+# third_party, since the HAL/CMSIS sources need MCU_DEFINE at compile time.
+include(boards/${BOARD}/board.cmake)
+
+add_subdirectory(third_party)
+add_subdirectory(boards/${BOARD})
+add_subdirectory(src)

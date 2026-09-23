@@ -1,0 +1,45 @@
+project_name:
+  type: str
+  help: "Human-readable project name (e.g. 'Widget Controller')"
+
+project_slug:
+  type: str
+  help: "Directory/identifier-safe name (e.g. widget-controller)"
+  default: "{{ project_name.lower().replace(' ', '-').replace('_', '-') }}"
+  validator: >-
+    {% if not project_slug %}
+    project_slug must not be empty
+    {% elif not project_slug[0].isalpha() %}
+    project_slug must start with a letter
+    {% elif project_slug != project_slug.lower() %}
+    project_slug must be lowercase
+    {% elif project_slug.replace('-', '').replace('_', '').isalnum() is not true %}
+    project_slug may only contain letters, digits, hyphens and underscores
+    {% endif %}
+
+# NOTE: defining _exclude REPLACES Copier's DEFAULT_EXCLUDE rather than
+# extending it. The entries below are those defaults, restored by hand —
+# without them Copier copies this repo's entire .git directory (including
+# .git/modules/, i.e. every submodule's full history) plus copier.yml itself
+# into every generated project.
+#
+# third_party/** is excluded because Copier clones the template's submodules
+# when the source is a URL — verified: `copier copy file://.../template.git`
+# produces a 74MB project with the full HAL/CMSIS/Unity source checked out as
+# ORDINARY FILES (mode 100644), not submodules. Deinitializing the submodules
+# in this repo does NOT prevent that; it only helps when generating from a
+# local working copy. Since publishing this template means people generate
+# from its URL, the exclusion is what actually keeps third_party/ empty in
+# generated projects, where tools/bootstrap.sh then restores it as real
+# pinned submodules.
+#
+# `!third_party/CMakeLists.txt` re-includes the one file there that is ours
+# rather than vendored.
+_exclude:
+  - "copier.yml"
+  - "copier.yaml"
+  - ".git"
+  - ".DS_Store"
+  - "~*"
+  - "third_party/**"
+  - "!third_party/CMakeLists.txt"

@@ -1,0 +1,45 @@
+# {{ project_name }}
+
+STM32 firmware, generated from [stm32-template](https://github.com/YOUR_USERNAME/stm32-template).
+
+Board: **Blackpill (STM32F401CCU6)**
+
+## First-time setup
+
+```sh
+./tools/bootstrap.sh
+```
+
+Clones the pinned third-party submodules. (Plain `git submodule update --init`
+won't work here — a generated project has `.gitmodules` but no git history, so
+there are no gitlinks for git to act on.)
+
+## Build (target)
+
+```sh
+cmake --preset blackpill_f401
+cmake --build --preset blackpill_f401
+```
+
+Output lands in `build/blackpill_f401/{{ project_slug }}.elf` (plus `.bin`, `.hex`, `.map`).
+
+## Build & run tests (host)
+
+Requires `ruby` on PATH (CMock uses it to generate mocks).
+
+```sh
+cmake -S test -B build/host-test
+cmake --build build/host-test
+ctest --test-dir build/host-test
+```
+
+## Flash
+
+```sh
+openocd -f interface/stlink.cfg -f target/stm32f4x.cfg \
+  -c "program build/blackpill_f401/{{ project_slug }}.elf verify reset exit"
+```
+
+## Layout
+
+See [AGENTS.md](AGENTS.md) for project conventions and [boards/README.md](boards/README.md) for adding a new board.

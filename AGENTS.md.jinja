@@ -1,0 +1,54 @@
+# {{ project_name }}
+
+STM32 firmware built with CMake. Board: blackpill (STM32F401CCU6), family STM32F4.
+
+## Build (cross-compile, target hardware)
+
+```sh
+cmake --preset blackpill_f401
+cmake --build --preset blackpill_f401
+```
+
+## Test (host, native compiler — not cross-compiled)
+
+`test/` is a separate, self-contained CMake project (own `CMakeLists.txt`), not a
+subdirectory of the firmware build. Configure and build it directly:
+
+```sh
+cmake -S test -B build/host-test
+cmake --build build/host-test
+ctest --test-dir build/host-test
+```
+
+## Layout
+
+- `boards/<name>/` — board-specific MCU define, linker script, and startup file selection.
+  Only `blackpill_f401` exists today. See `boards/README.md` before adding another.
+- `src/app/` — board-agnostic application logic. This is what gets unit tested.
+- `src/drivers/` — thin wrappers over the vendor HAL; the seam CMock mocks for host
+  tests. Don't call HAL functions directly from `src/app/` — go through a driver wrapper
+  so the app layer stays testable on the host.
+- `third_party/` — pinned git submodules (CMSIS core, CMSIS device F4, F4 HAL driver,
+  Unity, CMock). Don't edit these in place, and don't bump a pinned commit without
+  checking the release notes for API changes across CMSIS-Core/CMSIS-Device/HAL — they
+  must stay version-consistent.
+- `build/host-test/mocks/` — CMock output, regenerated at build time from
+  `src/drivers/*.h`. Never hand-edit; it lives in the build dir and is not committed.
+- `tools/bootstrap.sh` — first-time submodule setup, and `--write-pins` to re-record
+  pins after bumping a submodule.
+- `docs/` — currently empty; add design notes here as real decisions accumulate.
+
+## Gotchas
+
+- Run `./tools/bootstrap.sh` before the first configure. Plain
+  `git submodule update --init` does **not** work in a freshly generated project:
+  Copier ships `.gitmodules` but no git history, so there are no gitlink entries and
+  the command silently succeeds while cloning nothing. The script recreates the
+  gitlinks from the `sha` pins in `.gitmodules` first.
+- Two independent CMake configurations exist: the cross-build (`blackpill_f401` preset,
+  `arm-none-eabi-gcc`, source dir = repo root) and the host test build (source dir =
+  `test/`, system compiler). Never point one at the other's build directory.
+- CMock requires `ruby` on PATH to generate mocks; it is not a CMake/C dependency.
+- `-Wall -Wextra` come from the `project_warnings` interface target and apply only to
+  our own code. Vendor includes are marked SYSTEM. Link `project_warnings` into any new
+  target under `src/`; don't add warning flags globally.
