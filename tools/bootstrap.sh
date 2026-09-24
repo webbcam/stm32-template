@@ -13,11 +13,27 @@
 # in .gitmodules is used instead.
 #
 #   ./tools/bootstrap.sh              # set up submodules at their pinned commits
+#   ./tools/bootstrap.sh --prune      # same, and remove no-longer-required ones
 #   ./tools/bootstrap.sh --write-pins # re-record pins after bumping a submodule
+#
+# --prune matters after switching boards with `copier update`: that rewrites
+# required-submodules.txt but leaves the old family's submodules checked out,
+# so they linger unused. Without --prune this script only warns about them.
 #
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+
+mode=setup
+case "${1:-}" in
+    --write-pins) mode=write-pins ;;
+    --prune) mode=prune ;;
+    "") ;;
+    *)
+        echo "usage: $0 [--prune|--write-pins]" >&2
+        exit 2
+        ;;
+esac
 
 if [ ! -f .gitmodules ]; then
     echo "error: no .gitmodules here" >&2
@@ -26,7 +42,7 @@ fi
 
 all_paths=$(git config -f .gitmodules --get-regexp '^submodule\..*\.path$' | awk '{print $2}')
 
-if [ "${1:-}" = "--write-pins" ]; then
+if [ "$mode" = "write-pins" ]; then
     # Maintainer mode: always covers every submodule, not just the required set.
     for path in $all_paths; do
         sha=$(git -C "$path" rev-parse HEAD)
@@ -38,14 +54,43 @@ if [ "${1:-}" = "--write-pins" ]; then
 fi
 
 if [ -f tools/required-submodules.txt ]; then
-    paths=$(grep -v '^[[:space:]]*#' tools/required-submodules.txt | grep -v '^[[:space:]]*$')
+    required=$(grep -v '^[[:space:]]*#' tools/required-submodules.txt | grep -v '^[[:space:]]*$')
 else
-    paths=$all_paths
+    required=$all_paths
 fi
 
 [ -d .git ] || git init -q
 
-for path in $paths; do
+# Anything present (gitlink in the index, or a non-empty working tree) that the
+# current board no longer needs. $required is newline-separated, so collapse it
+# to a space-delimited string before substring-matching against it.
+# shellcheck disable=SC2086 # unquoted to collapse newlines into spaces
+required_flat=" $(echo $required) "
+
+stale=""
+for path in $all_paths; do
+    case "$required_flat" in
+        *" $path "*) continue ;;
+    esac
+    if git ls-files -s "$path" 2>/dev/null | grep -q '^160000' ||
+        [ -n "$(ls -A "$path" 2>/dev/null || true)" ]; then
+        stale="$stale $path"
+    fi
+done
+
+if [ "$mode" = "prune" ] && [ -n "$stale" ]; then
+    for path in $stale; do
+        echo "pruning $path"
+        git submodule deinit -f "$path" >/dev/null 2>&1 || true
+        git rm -q --cached "$path" >/dev/null 2>&1 ||
+            git update-index --force-remove "$path" >/dev/null 2>&1 || true
+        rmdir "$path" 2>/dev/null || true
+    done
+    stale=""
+    echo
+fi
+
+for path in $required; do
     sha=$(git config -f .gitmodules --get "submodule.$path.sha" || true)
     if [ -z "$sha" ]; then
         echo "error: no pin recorded for $path (run --write-pins)" >&2
@@ -56,9 +101,21 @@ for path in $paths; do
 done
 
 # shellcheck disable=SC2086 # word splitting is intended here
-git submodule init $paths
-git submodule update --recursive $paths
+git submodule init $required
+# shellcheck disable=SC2086
+git submodule update --recursive $required
 
 echo
 echo "Submodules are at their pinned commits:"
-git submodule status $paths
+# shellcheck disable=SC2086
+git submodule status $required
+
+if [ -n "$stale" ]; then
+    echo
+    echo "warning: these submodules are checked out but not required by this board:"
+    for path in $stale; do
+        echo "  $path"
+    done
+    echo "They are unused — re-run with --prune to remove them."
+    echo "(Their object data stays in .git/modules until you delete it.)"
+fi
