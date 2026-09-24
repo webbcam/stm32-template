@@ -28,16 +28,16 @@ submodule for the family and is referenced by path.
    (`cmsis-device-f1`, `stm32f1xx-hal-driver`) — see `.gitmodules`.
    `cmsis-core` is shared by every family and doesn't need re-adding.
 
-   After `git submodule add`, record the pin so generated projects can
+   After `git submodule add`, record its commit so generated projects can
    reproduce it:
 
    ```sh
-   ./tools/bootstrap.sh --write-pins   # writes `sha = ...` into .gitmodules
+   ./tools/bootstrap.sh --pin-commits   # writes `sha = ...` into .gitmodules
    ```
 
-   The same command re-pins after bumping an existing submodule (it reads each
-   submodule's checked-out HEAD, so they must be initialized when you run it).
-   Commit `.gitmodules` afterwards — those `sha` entries are what
+   The same command re-records after bumping an existing submodule (it reads
+   each submodule's checked-out HEAD, so they must be initialized when you run
+   it). Commit `.gitmodules` afterwards — those `sha` entries are what
    `tools/bootstrap.sh` restores in a freshly generated project.
 
    Submodules are kept deinitialized here as hygiene, but correctness does not

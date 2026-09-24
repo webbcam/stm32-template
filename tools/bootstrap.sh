@@ -4,17 +4,17 @@
 #
 # A generated project has .gitmodules but no git history, so it has no gitlink
 # entries — and `git submodule update --init` silently does nothing without
-# them (exits 0, clones nothing). This recreates the gitlinks from the `sha`
-# pins recorded in .gitmodules, then does a normal init + update.
+# them (exits 0, clones nothing). This recreates the gitlinks from the commit
+# SHAs recorded in .gitmodules, then does a normal init + update.
 #
 # Only the submodules listed in tools/required-submodules.txt are set up, so a
 # project doesn't clone another MCU family's HAL. That file is rendered by
 # Copier; when it's absent (i.e. in the template repo itself) every submodule
 # in .gitmodules is used instead.
 #
-#   ./tools/bootstrap.sh              # set up submodules at their pinned commits
-#   ./tools/bootstrap.sh --prune      # same, and remove no-longer-required ones
-#   ./tools/bootstrap.sh --write-pins # re-record pins after bumping a submodule
+#   ./tools/bootstrap.sh               # set up submodules at their pinned commits
+#   ./tools/bootstrap.sh --prune       # same, and remove no-longer-required ones
+#   ./tools/bootstrap.sh --pin-commits # re-record SHAs after bumping a submodule
 #
 # --prune matters after switching boards with `copier update`: that rewrites
 # required-submodules.txt but leaves the old family's submodules checked out,
@@ -26,11 +26,11 @@ cd "$(dirname "$0")/.."
 
 mode=setup
 case "${1:-}" in
-    --write-pins) mode=write-pins ;;
+    --pin-commits) mode=pin-commits ;;
     --prune) mode=prune ;;
     "") ;;
     *)
-        echo "usage: $0 [--prune|--write-pins]" >&2
+        echo "usage: $0 [--prune|--pin-commits]" >&2
         exit 2
         ;;
 esac
@@ -42,14 +42,14 @@ fi
 
 all_paths=$(git config -f .gitmodules --get-regexp '^submodule\..*\.path$' | awk '{print $2}')
 
-if [ "$mode" = "write-pins" ]; then
+if [ "$mode" = "pin-commits" ]; then
     # Maintainer mode: always covers every submodule, not just the required set.
     for path in $all_paths; do
         sha=$(git -C "$path" rev-parse HEAD)
         git config -f .gitmodules "submodule.$path.sha" "$sha"
         echo "pinned $path -> $sha"
     done
-    echo "Commit .gitmodules to record the new pins."
+    echo "Commit .gitmodules to record the new commit SHAs."
     exit 0
 fi
 
@@ -93,7 +93,7 @@ fi
 for path in $required; do
     sha=$(git config -f .gitmodules --get "submodule.$path.sha" || true)
     if [ -z "$sha" ]; then
-        echo "error: no pin recorded for $path (run --write-pins)" >&2
+        echo "error: no commit SHA recorded for $path (run --pin-commits)" >&2
         exit 1
     fi
     # Recreate the gitlink so `git submodule update` has a commit to target.

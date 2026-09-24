@@ -52,8 +52,8 @@ register layouts are not interchangeable.
   must stay version-consistent.
 - `build/host-test/mocks/` — CMock output, regenerated at build time from
   `src/drivers/*.h`. Never hand-edit; it lives in the build dir and is not committed.
-- `tools/bootstrap.sh` — first-time submodule setup, and `--write-pins` to re-record
-  pins after bumping a submodule. It sets up only the submodules listed in
+- `tools/bootstrap.sh` — first-time submodule setup, and `--pin-commits` to re-record
+  commit SHAs after bumping a submodule. It sets up only the submodules listed in
   `tools/required-submodules.txt`, which is why `.gitmodules` may name families this
   project doesn't build.
 - `docs/` — currently empty; add design notes here as real decisions accumulate.
@@ -64,7 +64,7 @@ register layouts are not interchangeable.
   `git submodule update --init` does **not** work in a freshly generated project:
   Copier ships `.gitmodules` but no git history, so there are no gitlink entries and
   the command silently succeeds while cloning nothing. The script recreates the
-  gitlinks from the `sha` pins in `.gitmodules` first.
+  gitlinks from the `sha` entries in `.gitmodules` first.
 - Two independent CMake configurations exist: the cross-build (`{{ boards[0] }}` preset,
   `arm-none-eabi-gcc`, source dir = repo root) and the host test build (source dir =
   `test/`, system compiler). Never point one at the other's build directory.
