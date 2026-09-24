@@ -60,14 +60,16 @@ board_meta:
 # properly, and tools/required-submodules.txt decides which ones.
 #
 # The boards/ entries are plain file filtering — board directories are
-# ordinary tracked files, nothing to do with submodules. One line per board is
-# needed because _exclude takes a single glob per entry, so "re-include each
-# of the N selected boards" cannot be written as one generic pattern. Each
-# line renders to an empty string (a no-op) when that board is selected.
+# ordinary tracked files, nothing to do with submodules. Everything under
+# boards/ is excluded, then the README and each selected board are negated
+# back in. The last entry loops over `boards`, emitting one newline-separated
+# `!boards/<name>` pattern per selection: a single _exclude entry may hold
+# several patterns, so this needs no per-board line and nothing here changes
+# when a board is added.
 #
-# Note these name the directory itself, not `<dir>/**`. A `/**` suffix matches
-# only the contents, so the directory would still be created and left behind
-# empty; excluding the directory drops it and everything under it.
+# The negations name each directory itself, not `<dir>/**`. A `/**` suffix
+# matches only a directory's contents, which would leave unselected boards
+# behind as empty directories.
 _exclude:
   - "copier.yml"
   - "copier.yaml"
@@ -76,5 +78,6 @@ _exclude:
   - "~*"
   - "third_party/**"
   - "!third_party/CMakeLists.txt"
-  - "{% if 'blackpill_f401' not in boards %}boards/blackpill_f401{% endif %}"
-  - "{% if 'bluepill_f103' not in boards %}boards/bluepill_f103{% endif %}"
+  - "boards/**"
+  - "!boards/README.md"
+  - "{% for b in boards %}!boards/{{ b }}\n{% endfor %}"

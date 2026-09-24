@@ -7,7 +7,8 @@ STM32 firmware built with CMake. Boards this project targets:
 {% endfor %}
 `boards/` and the submodules in `tools/required-submodules.txt` contain only what
 these boards need. Other boards the template supports were not generated here;
-adding one means adding its directory, preset, and family submodules.
+adding one means regenerating with it selected, or following `boards/README.md`
+to add a board the template doesn't know about yet.
 
 ## Build (cross-compile, target hardware)
 

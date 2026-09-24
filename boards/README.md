@@ -70,18 +70,19 @@ submodule for the family and is referenced by path.
      families — F1 uses `HSEPredivValue` + `PLLMUL`, F4 uses
      `PLLM/PLLN/PLLP/PLLQ`.
 
-5. **Add the board to `CMakePresets.json.jinja`.** It renders a single preset
-   for the selected board, so extend its `{% if %}` with the new display name.
-
-6. **Register it in `copier.yml`**, in three places:
+5. **Register it in `copier.yml`**, in two places:
 
    - a `choices` entry under the `boards` question,
-   - a `board_meta` entry giving its `family`, `label` and `openocd` target,
-   - one `_exclude` line following the existing pattern.
+   - a `board_meta` entry giving its `family`, `label` and `openocd` target.
 
-   The `_exclude` line is needed per board because that setting takes a single
-   glob per entry, so "re-include each of the N selected boards" can't be
-   written generically. Everything else derives from `board_meta`:
-   `tools/required-submodules.txt.jinja` maps the family to its submodules
-   using ST's consistent repo naming (`cmsis-device-<family>`,
-   `stm32<family>xx-hal-driver`), and the presets and docs read the label.
+   That's the whole registration. Nothing else needs editing per board:
+
+   - `_exclude` ends with a loop over the selected boards emitting one
+     `!boards/<name>` negation each, so it already covers any board.
+   - `CMakePresets.json.jinja` loops over the selected boards and takes the
+     display name from `board_meta`.
+   - `tools/required-submodules.txt.jinja` maps `board_meta`'s family to its
+     submodules using ST's consistent repo naming (`cmsis-device-<family>`,
+     `stm32<family>xx-hal-driver`).
+   - `README.md.jinja` and `AGENTS.md.jinja` read the label and OpenOCD
+     target from `board_meta`.
