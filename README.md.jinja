@@ -1,15 +1,18 @@
-{%- if board == 'bluepill_f103' -%}
-{%- set board_label = 'Bluepill (STM32F103C8T6, Cortex-M3)' -%}
-{%- set openocd_target = 'stm32f1x' -%}
-{%- else -%}
-{%- set board_label = 'Blackpill (STM32F401CCU6, Cortex-M4F)' -%}
-{%- set openocd_target = 'stm32f4x' -%}
-{%- endif -%}
 # {{ project_name }}
 
 STM32 firmware, generated from [stm32-template](https://github.com/YOUR_USERNAME/stm32-template).
 
-Board: **{{ board_label }}**
+{% if boards | length > 1 -%}
+Supported boards:
+
+| Preset | Board |
+|---|---|
+{% for b in boards -%}
+| `{{ b }}` | {{ board_meta[b]['label'] }} |
+{% endfor %}
+{%- else -%}
+Board: **{{ board_meta[boards[0]]['label'] }}**
+{%- endif %}
 
 ## First-time setup
 
@@ -17,22 +20,27 @@ Board: **{{ board_label }}**
 ./tools/bootstrap.sh
 ```
 
-Clones the pinned third-party submodules this board needs. (Plain
+Clones the pinned third-party submodules these boards need. (Plain
 `git submodule update --init` won't work here — a generated project has
 `.gitmodules` but no git history, so there are no gitlinks for git to act on.)
 
 ## Build (target)
 
 ```sh
-cmake --preset {{ board }}
-cmake --build --preset {{ board }}
+cmake --preset {{ boards[0] }}
+cmake --build --preset {{ boards[0] }}
 ```
 
-Output lands in `build/{{ board }}/{{ project_slug }}.elf` (plus `.bin`, `.hex`, `.map`).
+{% if boards | length > 1 -%}
+Swap in any other preset from the table above; each board builds into its own
+`build/<preset>/` directory, so they don't clobber each other.
+{% endif -%}
+Output lands in `build/<preset>/{{ project_slug }}.elf` (plus `.bin`, `.hex`, `.map`).
 
 ## Build & run tests (host)
 
-Requires `ruby` on PATH (CMock uses it to generate mocks).
+Requires `ruby` on PATH (CMock uses it to generate mocks). Host tests are
+board-independent — they exercise `src/app/` against mocked drivers.
 
 ```sh
 cmake -S test -B build/host-test
@@ -43,9 +51,11 @@ ctest --test-dir build/host-test
 ## Flash
 
 ```sh
-openocd -f interface/stlink.cfg -f target/{{ openocd_target }}.cfg \
-  -c "program build/{{ board }}/{{ project_slug }}.elf verify reset exit"
-```
+{% for b in boards -%}
+# {{ b }}
+openocd -f interface/stlink.cfg -f target/{{ board_meta[b]['openocd'] }}.cfg \
+  -c "program build/{{ b }}/{{ project_slug }}.elf verify reset exit"
+{% endfor %}```
 
 ## Layout
 

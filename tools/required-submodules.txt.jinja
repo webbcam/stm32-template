@@ -1,9 +1,17 @@
+{%- set families = [] -%}
+{%- for b in boards -%}
+{%- if board_meta[b]['family'] not in families -%}
+{%- set _ = families.append(board_meta[b]['family']) -%}
+{%- endif -%}
+{%- endfor -%}
 # Submodules this project actually needs, read by tools/bootstrap.sh.
-# Rendered by Copier from the selected board's MCU family, so a project never
-# clones another family's HAL. .gitmodules still lists every submodule the
+# Rendered by Copier from the selected boards' MCU families, so a project never
+# clones a family it doesn't build. .gitmodules still lists every submodule the
 # template knows about; this file is what narrows it down.
 third_party/cmsis-core
 third_party/unity
 third_party/cmock
-third_party/cmsis-device-{{ mcu_family }}
-third_party/stm32{{ mcu_family }}xx-hal-driver
+{% for f in families -%}
+third_party/cmsis-device-{{ f }}
+third_party/stm32{{ f }}xx-hal-driver
+{% endfor -%}

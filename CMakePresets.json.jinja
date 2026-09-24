@@ -2,22 +2,22 @@
   "version": 6,
   "cmakeMinimumRequired": { "major": 3, "minor": 25, "patch": 0 },
   "configurePresets": [
+{%- for b in boards %}
     {
-      "name": "{{ board }}",
-{%- if board == 'bluepill_f103' %}
-      "displayName": "Bluepill (STM32F103C8T6, Cortex-M3)",
-{%- else %}
-      "displayName": "Blackpill (STM32F401CCU6, Cortex-M4F)",
-{%- endif %}
-      "binaryDir": "${sourceDir}/build/{{ board }}",
+      "name": "{{ b }}",
+      "displayName": "{{ board_meta[b]['label'] }}",
+      "binaryDir": "${sourceDir}/build/{{ b }}",
       "cacheVariables": {
-        "BOARD": "{{ board }}",
+        "BOARD": "{{ b }}",
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchain-arm-none-eabi.cmake",
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }
-    }
+    }{{ "," if not loop.last }}
+{%- endfor %}
   ],
   "buildPresets": [
-    { "name": "{{ board }}", "configurePreset": "{{ board }}" }
+{%- for b in boards %}
+    { "name": "{{ b }}", "configurePreset": "{{ b }}" }{{ "," if not loop.last }}
+{%- endfor %}
   ]
 }

@@ -1,22 +1,24 @@
 # {{ project_name }}
 
-STM32 firmware built with CMake.
-{% if board == 'bluepill_f103' -%}
-Board: `bluepill_f103` (STM32F103C8T6, Cortex-M3, family F1).
-{%- else -%}
-Board: `blackpill_f401` (STM32F401CCU6, Cortex-M4F, family F4).
-{%- endif %}
+STM32 firmware built with CMake. Boards this project targets:
 
-This project was generated for one board. `boards/` and the submodules in
-`tools/required-submodules.txt` contain only what that board needs; adding a
-second board here means adding its directory, preset, and family submodules.
+{% for b in boards -%}
+- `{{ b }}` — {{ board_meta[b]['label'] }}, family {{ board_meta[b]['family'] | upper }}
+{% endfor %}
+`boards/` and the submodules in `tools/required-submodules.txt` contain only what
+these boards need. Other boards the template supports were not generated here;
+adding one means adding its directory, preset, and family submodules.
 
 ## Build (cross-compile, target hardware)
 
 ```sh
-cmake --preset {{ board }}
-cmake --build --preset {{ board }}
+cmake --preset {{ boards[0] }}
+cmake --build --preset {{ boards[0] }}
 ```
+{% if boards | length > 1 %}
+Each board has its own preset and its own `build/<preset>/` directory. A given
+configure targets exactly one `BOARD`; they never share a build tree.
+{% endif %}
 
 ## Test (host, native compiler — not cross-compiled)
 
@@ -63,7 +65,7 @@ register layouts are not interchangeable.
   Copier ships `.gitmodules` but no git history, so there are no gitlink entries and
   the command silently succeeds while cloning nothing. The script recreates the
   gitlinks from the `sha` pins in `.gitmodules` first.
-- Two independent CMake configurations exist: the cross-build (`{{ board }}` preset,
+- Two independent CMake configurations exist: the cross-build (`{{ boards[0] }}` preset,
   `arm-none-eabi-gcc`, source dir = repo root) and the host test build (source dir =
   `test/`, system compiler). Never point one at the other's build directory.
 - CMock requires `ruby` on PATH to generate mocks; it is not a CMake/C dependency.

@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.25)
 
-set(BOARD "{{ board }}" CACHE STRING "Target board (see boards/)")
+# Default only; each board has a preset that sets BOARD explicitly.
+set(BOARD "{{ boards[0] }}" CACHE STRING "Target board (see boards/)")
 
 project({{ project_slug }} C ASM)
 

@@ -17,20 +17,33 @@ project_slug:
     project_slug may only contain letters, digits, hyphens and underscores
     {% endif %}
 
-board:
+boards:
   type: str
-  help: "Target board"
-  default: blackpill_f401
+  multiselect: true
+  help: "Target board(s) — space to toggle, enter to confirm"
+  default: [blackpill_f401]
   choices:
     "Blackpill — STM32F401CCU6, Cortex-M4F": blackpill_f401
     "Bluepill — STM32F103C8T6, Cortex-M3": bluepill_f103
+  validator: "{% if not boards %}Select at least one board{% endif %}"
 
-# Derived, never asked (when: false). Selects which CMSIS-device/HAL submodule
-# pair the project gets, and which branch of third_party/CMakeLists.txt runs.
-mcu_family:
-  type: str
+# Per-board metadata, never asked. Single source of truth for everything the
+# templates need to know about a board: which MCU family (and therefore which
+# CMSIS-device/HAL submodule pair), how to describe it, and its OpenOCD target.
+# Adding a board means adding an entry here, a `choices` entry above, and one
+# line in _exclude below.
+board_meta:
+  type: yaml
   when: false
-  default: "{% if board == 'bluepill_f103' %}f1{% else %}f4{% endif %}"
+  default: |
+    blackpill_f401:
+      family: f4
+      label: Blackpill (STM32F401CCU6, Cortex-M4F)
+      openocd: stm32f4x
+    bluepill_f103:
+      family: f1
+      label: Bluepill (STM32F103C8T6, Cortex-M3)
+      openocd: stm32f1x
 
 # NOTE: defining _exclude REPLACES Copier's DEFAULT_EXCLUDE rather than
 # extending it. The first five entries are those defaults, restored by hand —
@@ -38,16 +51,23 @@ mcu_family:
 # .git/modules/, i.e. every submodule's full history) plus copier.yml itself
 # into every generated project.
 #
-# third_party/** is excluded because Copier clones the template's submodules
-# when the source is a URL — verified: without it, generating from a URL
-# produces a project with the full HAL/CMSIS/Unity source checked out as
-# ORDINARY FILES (mode 100644) instead of pinned submodules. Deinitializing
-# the submodules here does NOT prevent that; it only helps when generating
-# from a local working copy. tools/bootstrap.sh restores them properly.
+# third_party/** is a separate concern: Copier clones the template's
+# submodules when the source is a URL — verified: without this, generating
+# from a URL produces a project with the full HAL/CMSIS/Unity source checked
+# out as ORDINARY FILES (mode 100644) instead of pinned submodules.
+# Deinitializing the submodules here does NOT prevent that; it only helps when
+# generating from a local working copy. tools/bootstrap.sh restores them
+# properly, and tools/required-submodules.txt decides which ones.
 #
-# boards/** is excluded then selectively re-included so a project only carries
-# the board it targets. Written generically (rather than listing the boards
-# not chosen) so adding a board needs no change here.
+# The boards/ entries are plain file filtering — board directories are
+# ordinary tracked files, nothing to do with submodules. One line per board is
+# needed because _exclude takes a single glob per entry, so "re-include each
+# of the N selected boards" cannot be written as one generic pattern. Each
+# line renders to an empty string (a no-op) when that board is selected.
+#
+# Note these name the directory itself, not `<dir>/**`. A `/**` suffix matches
+# only the contents, so the directory would still be created and left behind
+# empty; excluding the directory drops it and everything under it.
 _exclude:
   - "copier.yml"
   - "copier.yaml"
@@ -56,6 +76,5 @@ _exclude:
   - "~*"
   - "third_party/**"
   - "!third_party/CMakeLists.txt"
-  - "boards/**"
-  - "!boards/README.md"
-  - "!boards/{{ board }}/**"
+  - "{% if 'blackpill_f401' not in boards %}boards/blackpill_f401{% endif %}"
+  - "{% if 'bluepill_f103' not in boards %}boards/bluepill_f103{% endif %}"
