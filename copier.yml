@@ -70,12 +70,22 @@ board_meta:
 # The negations name each directory itself, not `<dir>/**`. A `/**` suffix
 # matches only a directory's contents, which would leave unselected boards
 # behind as empty directories.
+#
+# .github/ holds this template's own README and is not part of a generated
+# project. That README can't live at the repo root: patterns are matched
+# against the DESTINATION path, so excluding "README.md" would also drop the
+# file README.md.jinja renders to (verified). GitHub renders .github/README.md
+# as the repo landing page, so the root stays free for the generated one.
+# Excluding the directory rather than just the README keeps generated projects
+# from getting an empty .github/ — revisit if the template ever ships .github/
+# content (CI workflows), which this would otherwise swallow.
 _exclude:
   - "copier.yml"
   - "copier.yaml"
   - ".git"
   - ".DS_Store"
   - "~*"
+  - ".github"
   - "third_party/**"
   - "!third_party/CMakeLists.txt"
   - "boards/**"
