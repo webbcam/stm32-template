@@ -29,7 +29,8 @@ boards:
 
 # Per-board metadata, never asked. Single source of truth for everything the
 # templates need to know about a board: which MCU family (and therefore which
-# CMSIS-device/HAL submodule pair), how to describe it, and its OpenOCD target.
+# CMSIS-device/HAL submodule pair), how to describe it, and its OpenOCD target
+# (each preset passes it to CMake for the `flash` target).
 # Adding a board means adding an entry here, a `choices` entry above, and one
 # line in _exclude below.
 board_meta:

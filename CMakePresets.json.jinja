@@ -9,6 +9,7 @@
       "binaryDir": "${sourceDir}/build/{{ b }}",
       "cacheVariables": {
         "BOARD": "{{ b }}",
+        "OPENOCD_TARGET": "{{ board_meta[b]['openocd'] }}",
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchain-arm-none-eabi.cmake",
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }

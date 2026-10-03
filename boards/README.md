@@ -80,7 +80,8 @@ submodule for the family and is referenced by path.
    - `_exclude` ends with a loop over the selected boards emitting one
      `!boards/<name>` negation each, so it already covers any board.
    - `CMakePresets.json.jinja` loops over the selected boards and takes the
-     display name from `board_meta`.
+     display name and OpenOCD target (for the `flash` target) from `board_meta`.
+   - `Makefile.jinja` takes its list of valid `BOARD` values from `boards`.
    - `tools/required-submodules.txt.jinja` maps `board_meta`'s family to its
      submodules using ST's consistent repo naming (`cmsis-device-<family>`,
      `stm32<family>xx-hal-driver`).

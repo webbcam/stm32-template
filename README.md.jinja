@@ -27,20 +27,33 @@ Clones the pinned third-party submodules these boards need. (Plain
 ## Build (target)
 
 ```sh
+make
+```
+{% if boards | length > 1 %}
+That builds `{{ boards[0] }}`. Pick another board from the table above with
+`make BOARD=<preset>`, or build them all with `make all-boards`. Each board
+builds into its own `build/<preset>/` directory, so they don't clobber each other.
+{% endif %}
+Output lands in `build/<preset>/{{ project_slug }}.elf` (plus `.bin`, `.hex`, `.map`).
+`make help` lists every target.
+
+The Makefile is a thin wrapper around the CMake presets. The equivalent by hand:
+
+```sh
 cmake --preset {{ boards[0] }}
 cmake --build --preset {{ boards[0] }}
 ```
-
-{% if boards | length > 1 -%}
-Swap in any other preset from the table above; each board builds into its own
-`build/<preset>/` directory, so they don't clobber each other.
-{% endif -%}
-Output lands in `build/<preset>/{{ project_slug }}.elf` (plus `.bin`, `.hex`, `.map`).
 
 ## Build & run tests (host)
 
 Requires `ruby` on PATH (CMock uses it to generate mocks). Host tests are
 board-independent — they exercise `src/app/` against mocked drivers.
+
+```sh
+make test
+```
+
+By hand:
 
 ```sh
 cmake -S test -B build/host-test
@@ -49,6 +62,17 @@ ctest --test-dir build/host-test
 ```
 
 ## Flash
+
+Requires `openocd` on PATH and an ST-Link probe.
+
+```sh
+make flash{% if boards | length > 1 %}                      # or: make flash BOARD=<preset>{% endif %}
+```
+
+This rebuilds if needed, then programs, verifies and resets the board. For a
+different probe, configure with `-DOPENOCD_INTERFACE=<name>` (any config under
+OpenOCD's `interface/`). Under the hood it is the CMake `flash` target,
+`cmake --build --preset <preset> --target flash`, which runs:
 
 ```sh
 {% for b in boards -%}

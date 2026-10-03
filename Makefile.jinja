@@ -1,0 +1,57 @@
+# Convenience wrapper around the CMake presets. CMake stays the source of
+# truth; every target here is one or two plain cmake/ctest commands, so
+# anything you can do here you can also do by hand (see README.md).
+#
+#   make                        build the default board ({{ boards[0] }})
+#   make BOARD=<board>          build another board
+#   make flash                  build, then flash over OpenOCD
+#   make help                   list everything
+
+BOARD ?= {{ boards[0] }}
+BOARDS := {{ boards | join(' ') }}
+
+BUILD_DIR := build/$(BOARD)
+HOST_TEST_DIR := build/host-test
+
+ifeq ($(filter $(BOARD),$(BOARDS)),)
+$(error Unknown BOARD '$(BOARD)'. Choose one of: $(BOARDS))
+endif
+
+.DEFAULT_GOAL := build
+.PHONY: build configure flash test clean distclean help{% if boards | length > 1 %} all-boards{% endif %}
+
+# Configure only when the build tree is missing or the presets have changed.
+# After that, `cmake --build` re-runs configure itself if a CMakeLists.txt changes.
+$(BUILD_DIR)/CMakeCache.txt: CMakePresets.json
+	cmake --preset $(BOARD)
+
+$(HOST_TEST_DIR)/CMakeCache.txt:
+	cmake -S test -B $(HOST_TEST_DIR)
+
+build: $(BUILD_DIR)/CMakeCache.txt ## Build firmware for BOARD
+	cmake --build --preset $(BOARD)
+
+configure: ## Re-run CMake configure for BOARD, even if already configured
+	cmake --preset $(BOARD)
+
+flash: $(BUILD_DIR)/CMakeCache.txt ## Build, then flash BOARD over OpenOCD
+	cmake --build --preset $(BOARD) --target flash
+{% if boards | length > 1 %}
+all-boards: ## Build firmware for every board
+	set -e; for b in $(BOARDS); do $(MAKE) --no-print-directory build BOARD=$$b; done
+{% endif %}
+test: $(HOST_TEST_DIR)/CMakeCache.txt ## Build and run host unit tests
+	cmake --build $(HOST_TEST_DIR)
+	ctest --test-dir $(HOST_TEST_DIR) --output-on-failure
+
+clean: ## Delete BOARD's build directory
+	rm -rf $(BUILD_DIR)
+
+distclean: ## Delete every build directory, host tests included
+	rm -rf build
+
+help: ## List targets
+	@echo "Usage: make [target] [BOARD=<board>]   (BOARD defaults to {{ boards[0] }})"
+	@echo "Boards: $(BOARDS)"
+	@echo
+	@awk -F':.*## ' '/^[a-z-]+:.*## / { printf "  %-12s %s\n", $$1, $$2 }' $(firstword $(MAKEFILE_LIST))

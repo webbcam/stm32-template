@@ -18,8 +18,7 @@ pipx install copier          # or: uv tool install copier
 copier copy gh:YOUR_USERNAME/stm32-template ~/Develop/projects/my-fw
 cd ~/Develop/projects/my-fw
 ./tools/bootstrap.sh
-cmake --preset blackpill_f401
-cmake --build --preset blackpill_f401
+make                         # build; `make flash` to program the board, `make help` for more
 ```
 
 Copier asks for a project name, a slug, and which board(s) to target. Boards are
@@ -62,6 +61,7 @@ template doesn't know about.
 ```
 CMakeLists.txt         firmware build; BOARD selects the board
 CMakePresets.json      one configure/build preset per selected board
+Makefile               short commands (build, flash, test) wrapping the presets
 AGENTS.md              conventions, for humans and coding agents
 boards/<name>/         everything board-specific (see boards/README.md)
 cmake/                 toolchain file, compiler/warning flags

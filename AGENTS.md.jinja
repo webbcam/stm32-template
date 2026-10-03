@@ -13,9 +13,12 @@ to add a board the template doesn't know about yet.
 ## Build (cross-compile, target hardware)
 
 ```sh
-cmake --preset {{ boards[0] }}
-cmake --build --preset {{ boards[0] }}
+make                     # = cmake --preset {{ boards[0] }} (first time) + cmake --build --preset {{ boards[0] }}
+make flash               # = cmake --build --preset {{ boards[0] }} --target flash (OpenOCD)
 ```
+
+`make BOARD=<preset>` selects another board. The Makefile only wraps the presets;
+build logic belongs in CMake, not in the Makefile.
 {% if boards | length > 1 %}
 Each board has its own preset and its own `build/<preset>/` directory. A given
 configure targets exactly one `BOARD`; they never share a build tree.
@@ -24,7 +27,8 @@ configure targets exactly one `BOARD`; they never share a build tree.
 ## Test (host, native compiler — not cross-compiled)
 
 `test/` is a separate, self-contained CMake project (own `CMakeLists.txt`), not a
-subdirectory of the firmware build. Configure and build it directly:
+subdirectory of the firmware build. `make test` configures, builds and runs it;
+by hand:
 
 ```sh
 cmake -S test -B build/host-test
