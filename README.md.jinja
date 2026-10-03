@@ -30,9 +30,17 @@ Clones the pinned third-party submodules these boards need. (Plain
 make
 ```
 {% if boards | length > 1 %}
-That builds `{{ boards[0] }}`. Pick another board from the table above with
-`make BOARD=<preset>`, or build them all with `make all-boards`. Each board
-builds into its own `build/<preset>/` directory, so they don't clobber each other.
+That builds `{{ boards[0] }}` until you select another board from the table above:
+
+```sh
+make configure BOARD=<preset>   # select it; plain make / make flash now use it
+make BOARD=<preset>             # or build it once without changing the selection
+make all-boards                 # or build every board
+```
+
+The selection is saved in `build/.board`; `make help` shows the current one and
+`make distclean` resets it. Each board builds into its own `build/<preset>/`
+directory, so they don't clobber each other.
 {% endif %}
 Output lands in `build/<preset>/{{ project_slug }}.elf` (plus `.bin`, `.hex`, `.map`).
 `make help` lists every target.

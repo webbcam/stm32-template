@@ -21,8 +21,10 @@ The flash tool is the `FLASH_TOOL` cache variable (`openocd` default, `stlink`,
 `cubeprog`), defined with the `flash` target in `src/CMakeLists.txt`. Switch with
 `make configure FLASH_TOOL=<tool>`.
 
-`make BOARD=<preset>` selects another board. The Makefile only wraps the presets;
-build logic belongs in CMake, not in the Makefile.
+`make configure BOARD=<preset>` selects another board and records it in
+`build/.board`, so later plain `make` / `make flash` target it; `make BOARD=<preset>`
+overrides it for one command. The Makefile only wraps the presets; build logic
+belongs in CMake, not in the Makefile.
 {% if boards | length > 1 %}
 Each board has its own preset and its own `build/<preset>/` directory. A given
 configure targets exactly one `BOARD`; they never share a build tree.

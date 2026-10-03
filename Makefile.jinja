@@ -2,15 +2,30 @@
 # truth; every target here is one or two plain cmake/ctest commands, so
 # anything you can do here you can also do by hand (see README.md).
 #
-#   make                        build the default board ({{ boards[0] }})
-#   make BOARD=<board>          build another board
+#   make                        build the selected board
+#   make configure BOARD=<board>
+#                               select a board; remembered for later commands
+#   make BOARD=<board>          build another board once, without selecting it
 #   make flash                  build, then flash (OpenOCD unless reconfigured)
 #   make configure FLASH_TOOL=stlink
 #                               switch flash tool: openocd, stlink or cubeprog
 #   make help                   list everything
 
-BOARD ?= {{ boards[0] }}
 BOARDS := {{ boards | join(' ') }}
+DEFAULT_BOARD := {{ boards[0] }}
+
+# `make configure` records BOARD here so plain `make` / `make flash` keep using
+# it. Inside build/, so it is git-ignored and `make distclean` forgets it. A
+# BOARD on the command line or in the environment still wins for that command.
+BOARD_FILE := build/.board
+SAVED_BOARD := $(strip $(shell cat $(BOARD_FILE) 2>/dev/null))
+BOARD ?= $(or $(SAVED_BOARD),$(DEFAULT_BOARD))
+
+ifeq ($(origin BOARD),file)
+BOARD_SOURCE := $(if $(SAVED_BOARD),selected with make configure,default)
+else
+BOARD_SOURCE := from $(origin BOARD)
+endif
 
 BUILD_DIR := build/$(BOARD)
 HOST_TEST_DIR := build/host-test
@@ -19,8 +34,12 @@ HOST_TEST_DIR := build/host-test
 # It lands in the CMake cache, so later plain `make flash` keeps using it.
 CONFIGURE := cmake --preset $(BOARD)$(if $(FLASH_TOOL), -DFLASH_TOOL=$(FLASH_TOOL))
 
+# Skipped for distclean and help, so a saved board that no longer exists (say,
+# after `copier update` dropped it) can still be inspected and forgotten.
+ifneq ($(filter-out distclean help,$(or $(MAKECMDGOALS),build)),)
 ifeq ($(filter $(BOARD),$(BOARDS)),)
-$(error Unknown BOARD '$(BOARD)'. Choose one of: $(BOARDS))
+$(error Unknown BOARD '$(BOARD)' ($(BOARD_SOURCE)). Choose one of: $(BOARDS)$(if $(and $(SAVED_BOARD),$(filter file,$(origin BOARD))), -- select one with make configure BOARD=<board> or forget it with make distclean))
+endif
 endif
 
 .DEFAULT_GOAL := build
@@ -37,8 +56,9 @@ $(HOST_TEST_DIR)/CMakeCache.txt:
 build: $(BUILD_DIR)/CMakeCache.txt ## Build firmware for BOARD
 	cmake --build --preset $(BOARD)
 
-configure: ## Re-run CMake configure for BOARD (accepts FLASH_TOOL=...)
+configure: ## Configure BOARD and select it for later commands (accepts FLASH_TOOL=...)
 	$(CONFIGURE)
+	@echo $(BOARD) > $(BOARD_FILE)
 
 flash: $(BUILD_DIR)/CMakeCache.txt ## Build, then flash BOARD with FLASH_TOOL
 	cmake --build --preset $(BOARD) --target flash
@@ -53,11 +73,12 @@ test: $(HOST_TEST_DIR)/CMakeCache.txt ## Build and run host unit tests
 clean: ## Delete BOARD's build directory
 	rm -rf $(BUILD_DIR)
 
-distclean: ## Delete every build directory, host tests included
+distclean: ## Delete every build directory and forget the selected board
 	rm -rf build
 
 help: ## List targets
-	@echo "Usage: make [target] [BOARD=<board>]   (BOARD defaults to {{ boards[0] }})"
+	@echo "Usage: make [target] [BOARD=<board>]"
+	@echo "Board:  $(BOARD) ($(BOARD_SOURCE))"
 	@echo "Boards: $(BOARDS)"
 	@echo
 	@awk -F':.*## ' '/^[a-z-]+:.*## / { printf "  %-12s %s\n", $$1, $$2 }' $(firstword $(MAKEFILE_LIST))
