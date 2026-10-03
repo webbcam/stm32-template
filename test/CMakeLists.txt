@@ -5,6 +5,9 @@
 cmake_minimum_required(VERSION 3.25)
 project(host_tests C)
 
+# build/host-test/compile_commands.json, for clangd (see .clangd).
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 set(FW_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/..)
 set(THIRD_PARTY ${FW_ROOT}/third_party)
 

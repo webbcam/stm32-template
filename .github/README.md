@@ -63,6 +63,7 @@ CMakeLists.txt         firmware build; BOARD selects the board
 CMakePresets.json      one configure/build preset per selected board
 Makefile               short commands (build, flash, test) wrapping the presets
 AGENTS.md              conventions, for humans and coding agents
+.clangd                points clangd at each build's compile_commands.json
 boards/<name>/         everything board-specific (see boards/README.md)
 cmake/                 toolchain file, compiler/warning flags
 src/main.c

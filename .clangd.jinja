@@ -1,0 +1,27 @@
+# clangd (go-to-definition, completion, diagnostics in your editor) reads the
+# compile_commands.json files CMake writes into each build directory. The
+# firmware and the host tests are separate CMake builds with different
+# compilers, so each part of the tree is pointed at its own database. Paths are
+# relative to this file; a database exists only after that build has been
+# configured.
+#
+# Run clangd with --query-driver=<path to arm-none-eabi-gcc> (a glob such as
+# /opt/homebrew/bin/arm-none-eabi-* works), or it resolves <stdint.h> and
+# friends against the host's headers instead of the toolchain's newlib.
+
+# Everything not matched below: the firmware build of {{ boards[0] }}. Point
+# this at another build/<preset> to browse src/ as that board.
+CompileFlags:
+  CompilationDatabase: build/{{ boards[0] }}
+{%- for b in boards[1:] %}
+---
+If:
+  PathMatch: boards/{{ b }}/.*
+CompileFlags:
+  CompilationDatabase: build/{{ b }}
+{%- endfor %}
+---
+If:
+  PathMatch: test/.*
+CompileFlags:
+  CompilationDatabase: build/host-test

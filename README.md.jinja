@@ -108,6 +108,27 @@ openocd -f interface/stlink.cfg -f target/{{ board_meta[b]['openocd'] }}.cfg \
   -c "program build/{{ b }}/{{ project_slug }}.elf verify reset exit"
 {% endfor %}```
 
+## Editor setup (clangd)
+
+Go-to-definition, completion and diagnostics work in any editor with an LSP
+client (Vim, Neovim, VS Code, …) through [clangd](https://clangd.llvm.org/).
+Every build exports a `compile_commands.json`, and `.clangd` points each part of
+the tree at the right one, so build once first:
+
+```sh
+make && make test
+```
+
+Then start clangd with the ARM toolchain allowed as a query driver, so it uses
+newlib's headers instead of your host's:
+
+```sh
+clangd --background-index --query-driver=$(dirname $(which arm-none-eabi-gcc))/arm-none-eabi-*
+```
+
+`src/` is indexed as the board named first in `.clangd`; edit that line to
+browse as another board.
+
 ## Layout
 
 See [AGENTS.md](AGENTS.md) for project conventions and [boards/README.md](boards/README.md) for adding a new board.

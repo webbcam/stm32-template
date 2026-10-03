@@ -70,6 +70,9 @@ register layouts are not interchangeable.
   `tools/required-submodules.txt`, which is why `.gitmodules` may name families this
   project doesn't build.
 - `docs/` — currently empty; add design notes here as real decisions accumulate.
+- `.clangd` — maps each part of the tree to the `compile_commands.json` that builds it
+  (firmware preset, per-board directories, `build/host-test` for `test/`). Every preset
+  and the host test project export one; keep that on for any new build configuration.
 
 ## Gotchas
 
@@ -82,6 +85,9 @@ register layouts are not interchangeable.
   `arm-none-eabi-gcc`, source dir = repo root) and the host test build (source dir =
   `test/`, system compiler). Never point one at the other's build directory.
 - CMock requires `ruby` on PATH to generate mocks; it is not a CMake/C dependency.
+- clangd needs `--query-driver=<path to arm-none-eabi-gcc>` (set in the editor's
+  LSP config; `.clangd` can't set it), so it reads the toolchain's newlib headers
+  instead of the host's. A database exists only after that build has been configured.
 - `-Wall -Wextra` come from the `project_warnings` interface target and apply only to
   our own code. Vendor includes are marked SYSTEM. Link `project_warnings` into any new
   target under `src/`; don't add warning flags globally.

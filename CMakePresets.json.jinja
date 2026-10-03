@@ -11,7 +11,8 @@
         "BOARD": "{{ b }}",
         "OPENOCD_TARGET": "{{ board_meta[b]['openocd'] }}",
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchain-arm-none-eabi.cmake",
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       }
     }{{ "," if not loop.last }}
 {%- endfor %}
