@@ -15,7 +15,7 @@ than vendored into your tree.
 
 ```sh
 pipx install copier          # or: uv tool install copier
-copier copy gh:YOUR_USERNAME/stm32-template ~/Develop/projects/my-fw
+copier copy gh:webbcam/stm32-template ~/Develop/projects/my-fw
 cd ~/Develop/projects/my-fw
 ./tools/bootstrap.sh
 make                         # build; `make flash` to program the board, `make help` for more
