@@ -50,6 +50,8 @@ ctest --test-dir build/host-test
 - `src/drivers/` — thin wrappers over the vendor HAL; the seam CMock mocks for host
   tests. Don't call HAL functions directly from `src/app/` — go through a driver wrapper
   so the app layer stays testable on the host.
+- `src/interrupts.c` — exception/IRQ handlers (`SysTick_Handler` drives `HAL_Delay()`).
+  Family-neutral, so it lives in `src/`, not per board.
 
 Nothing under `src/` may include a family-specific header. Include `"mcu.h"` instead —
 each board provides one that pulls in its own `stm32f4xx_hal.h` / `stm32f1xx_hal.h`.
@@ -81,3 +83,7 @@ register layouts are not interchangeable.
 - `-Wall -Wextra` come from the `project_warnings` interface target and apply only to
   our own code. Vendor includes are marked SYSTEM. Link `project_warnings` into any new
   target under `src/`; don't add warning flags globally.
+- Interrupt handlers must be compiled into the executable (e.g. `src/interrupts.c`),
+  not a static library. The startup file defines every handler as a weak alias to
+  `Default_Handler` (an infinite loop), so the linker never pulls a strong override
+  out of an archive — it links fine and the chip hangs on the first interrupt.

@@ -1,7 +1,7 @@
 add_subdirectory(drivers)
 add_subdirectory(app)
 
-add_executable(${PROJECT_NAME} main.c)
+add_executable(${PROJECT_NAME} main.c interrupts.c)
 
 # Land the artifacts at the top of the build dir (build/<preset>/) rather than
 # build/<preset>/src/, so the paths in README.md are the real ones.
