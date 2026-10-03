@@ -63,16 +63,35 @@ ctest --test-dir build/host-test
 
 ## Flash
 
-Requires `openocd` on PATH and an ST-Link probe.
+Needs an ST-Link probe and one of the flash tools below on PATH (OpenOCD by default).
 
 ```sh
 make flash{% if boards | length > 1 %}                      # or: make flash BOARD=<preset>{% endif %}
 ```
 
-This rebuilds if needed, then programs, verifies and resets the board. For a
-different probe, configure with `-DOPENOCD_INTERFACE=<name>` (any config under
-OpenOCD's `interface/`). Under the hood it is the CMake `flash` target,
-`cmake --build --preset <preset> --target flash`, which runs:
+This rebuilds if needed, then programs, verifies and resets the board. Under
+the hood it is the CMake `flash` target,
+`cmake --build --preset <preset> --target flash`.
+
+### Choosing a flash tool
+
+| `FLASH_TOOL` | Program | Notes |
+|---|---|---|
+| `openocd` (default) | `openocd` | Use another probe with `-DOPENOCD_INTERFACE=<name>` (any config under OpenOCD's `interface/`) |
+| `stlink` | `st-flash` | Open-source stlink tools (`brew install stlink`); writes the `.bin` at `0x08000000` |
+| `cubeprog` | `STM32_Programmer_CLI` | ST's STM32CubeProgrammer; found in its default install location even if not on PATH |
+
+Switch with:
+
+```sh
+make configure FLASH_TOOL=stlink        # or: cmake --preset {{ boards[0] }} -DFLASH_TOOL=stlink
+```
+
+The choice is stored in that board's CMake cache, so later `make flash` keeps
+using it until you switch again or run `make clean`. To change the default
+for everyone, edit `FLASH_TOOL` in `src/CMakeLists.txt`.
+
+With the default tool, `make flash` runs:
 
 ```sh
 {% for b in boards -%}

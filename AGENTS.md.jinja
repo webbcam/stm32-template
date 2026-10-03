@@ -14,8 +14,12 @@ to add a board the template doesn't know about yet.
 
 ```sh
 make                     # = cmake --preset {{ boards[0] }} (first time) + cmake --build --preset {{ boards[0] }}
-make flash               # = cmake --build --preset {{ boards[0] }} --target flash (OpenOCD)
+make flash               # = cmake --build --preset {{ boards[0] }} --target flash
 ```
+
+The flash tool is the `FLASH_TOOL` cache variable (`openocd` default, `stlink`,
+`cubeprog`), defined with the `flash` target in `src/CMakeLists.txt`. Switch with
+`make configure FLASH_TOOL=<tool>`.
 
 `make BOARD=<preset>` selects another board. The Makefile only wraps the presets;
 build logic belongs in CMake, not in the Makefile.

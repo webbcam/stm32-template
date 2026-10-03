@@ -4,7 +4,9 @@
 #
 #   make                        build the default board ({{ boards[0] }})
 #   make BOARD=<board>          build another board
-#   make flash                  build, then flash over OpenOCD
+#   make flash                  build, then flash (OpenOCD unless reconfigured)
+#   make configure FLASH_TOOL=stlink
+#                               switch flash tool: openocd, stlink or cubeprog
 #   make help                   list everything
 
 BOARD ?= {{ boards[0] }}
@@ -12,6 +14,10 @@ BOARDS := {{ boards | join(' ') }}
 
 BUILD_DIR := build/$(BOARD)
 HOST_TEST_DIR := build/host-test
+
+# Passed through to CMake only when given, e.g. `make configure FLASH_TOOL=stlink`.
+# It lands in the CMake cache, so later plain `make flash` keeps using it.
+CONFIGURE := cmake --preset $(BOARD)$(if $(FLASH_TOOL), -DFLASH_TOOL=$(FLASH_TOOL))
 
 ifeq ($(filter $(BOARD),$(BOARDS)),)
 $(error Unknown BOARD '$(BOARD)'. Choose one of: $(BOARDS))
@@ -23,7 +29,7 @@ endif
 # Configure only when the build tree is missing or the presets have changed.
 # After that, `cmake --build` re-runs configure itself if a CMakeLists.txt changes.
 $(BUILD_DIR)/CMakeCache.txt: CMakePresets.json
-	cmake --preset $(BOARD)
+	$(CONFIGURE)
 
 $(HOST_TEST_DIR)/CMakeCache.txt:
 	cmake -S test -B $(HOST_TEST_DIR)
@@ -31,10 +37,10 @@ $(HOST_TEST_DIR)/CMakeCache.txt:
 build: $(BUILD_DIR)/CMakeCache.txt ## Build firmware for BOARD
 	cmake --build --preset $(BOARD)
 
-configure: ## Re-run CMake configure for BOARD, even if already configured
-	cmake --preset $(BOARD)
+configure: ## Re-run CMake configure for BOARD (accepts FLASH_TOOL=...)
+	$(CONFIGURE)
 
-flash: $(BUILD_DIR)/CMakeCache.txt ## Build, then flash BOARD over OpenOCD
+flash: $(BUILD_DIR)/CMakeCache.txt ## Build, then flash BOARD with FLASH_TOOL
 	cmake --build --preset $(BOARD) --target flash
 {% if boards | length > 1 %}
 all-boards: ## Build firmware for every board
